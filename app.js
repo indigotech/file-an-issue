@@ -149,7 +149,7 @@ function fbWebhookPost(req, res) {
             var changes = req.body.entry[i].changes;
             for(var j in changes) {
                 // Changes field type = 'posts' for new posts
-                if(changes[j].field && changes[j].field === 'mention') {
+                if(changes[j].field && changes[j].field === 'posts') {
                     if(changes[j].value && changes[j].value.item && changes[j].value.item == 'comment') {
                         // comment
                         var comment_id = changes[j].value.comment_id;
