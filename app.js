@@ -143,7 +143,7 @@ function fbWebhookGet(req, res) {
 }
 
 function fbWebhookPost(req, res) {
-  //console.log(JSON.stringify(req.body, null, 2));
+  console.log(JSON.stringify(req.body, null, 2));
     if(req.body && req.body.entry) {
         for(var i in req.body.entry) {
             var changes = req.body.entry[i].changes;
