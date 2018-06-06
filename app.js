@@ -18,6 +18,8 @@ const
 
 console.log(githubhandles);
 
+require('dotenv').config()
+
 var app = express();
 app.set('port', process.env.PORT || 5000);
 
@@ -149,7 +151,7 @@ function fbWebhookPost(req, res) {
             var changes = req.body.entry[i].changes;
             for(var j in changes) {
                 // Changes field type = 'posts' for new posts
-                if(changes[j].field && changes[j].field === 'posts') {
+                if(changes[j].field && changes[j].field === 'mention') {
                     if(changes[j].value && changes[j].value.item && changes[j].value.item == 'comment') {
                         // comment
                         var comment_id = changes[j].value.comment_id;
@@ -164,8 +166,9 @@ function fbWebhookPost(req, res) {
                         },function(error,response,body) {
                             if(body) {
                                 var post = JSON.parse(body);
+                                const title = post.message.match(/^.*$/m)[0];
                                 likePostOrCommentId(comment_id);
-                                createGithubIssue(comment_message, post.message, comment_id, post.permalink_url);
+                                createGithubIssue(title, post.message, comment_id, post.permalink_url);
                             }
                         });
                     } else if(changes[j].value && changes[j].value.item && changes[j].value.item == 'post') {
@@ -180,8 +183,9 @@ function fbWebhookPost(req, res) {
                         },function(error,response,body) {
                             if(body) {
                                 var post = JSON.parse(body);
+                                const title = post.message.match(/^.*$/m)[0];
                                 likePostOrCommentId(post.id);
-                                createGithubIssue('New Issue', post.message, post.id, post.permalink_url);
+                                createGithubIssue(title, post.message, post.id, post.permalink_url);
                             }
                         });
                     }
@@ -261,6 +265,7 @@ var createGithubIssue = function(title, description, origin_id, permalink_url) {
         if(error) {
             console.error(error);
         } else {
+            console.log('body', body);
             var issue = JSON.parse(body);
             replyToPostOrCommentId(origin_id,'Created issue: ' + issue.html_url);
         }
