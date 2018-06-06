@@ -167,7 +167,18 @@ function fbWebhookPost(req, res) {
                             if(body) {
                                 var post = JSON.parse(body);
                                 const title = post.message.match(/^.*$/m)[0];
+                                post.message = `` +
+                                `## Title \n \n` +
+                                `${post.message} \n \n` +
+                                `${comment_message}` +
+                                `## Relevance \n` +
+                                `- [ ] Must \n` +
+                                `- [ ] Nice to have \n` +
+                                `- [ ] Curiosity \n \n` +
+                                `## TL;DR (optional) \n \n` +
+                                `## Other related resources (optional) \n`;
                                 likePostOrCommentId(comment_id);
+                                // comment_message;
                                 createGithubIssue(title, post.message, comment_id, post.permalink_url);
                             }
                         });
@@ -184,6 +195,15 @@ function fbWebhookPost(req, res) {
                             if(body) {
                                 var post = JSON.parse(body);
                                 const title = post.message.match(/^.*$/m)[0];
+                                post.message = `` +
+                                `## Title \n \n` +
+                                `${post.message} \n \n` +
+                                `## Relevance \n` +
+                                `- [ ] Must \n` +
+                                `- [ ] Nice to have \n` +
+                                `- [ ] Curiosity \n \n` +
+                                `## TL;DR (optional) \n \n` +
+                                `## Other related resources (optional) \n`;
                                 likePostOrCommentId(post.id);
                                 createGithubIssue(title, post.message, post.id, post.permalink_url);
                             }
