@@ -287,7 +287,7 @@ var createGithubIssue = function(title, description, origin_id, permalink_url) {
         } else {
             console.log('body', body);
             var issue = JSON.parse(body);
-            replyToPostOrCommentId(origin_id,'Thanks for sharing! :D' + issue.html_url);
+            replyToPostOrCommentId(origin_id,'Thanks for the honey! :D' + issue.html_url);
         }
     });
 };
