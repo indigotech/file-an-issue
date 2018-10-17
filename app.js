@@ -14,7 +14,8 @@ const
     crypto = require('crypto'),
     express = require('express'),
     request = require('request'),
-    githubhandles = require('./githubhandles.json');
+    githubhandles = require('./githubhandles.json'),
+    PageDatasource = require('./handlers/data/page.datasource');
 
 console.log(githubhandles);
 
@@ -166,20 +167,9 @@ function fbWebhookPost(req, res) {
                         },function(error,response,body) {
                             if(body) {
                                 var post = JSON.parse(body);
-                                const title = post.message.match(/^.*$/m)[0];
-                                post.message = `` +
-                                `## Title \n \n` +
-                                `${post.message} \n \n` +
-                                `${comment_message}` +
-                                `## Relevance \n` +
-                                `- [ ] Must \n` +
-                                `- [ ] Nice to have \n` +
-                                `- [ ] Curiosity \n \n` +
-                                `## TL;DR (optional) \n \n` +
-                                `## Other related resources (optional) \n`;
                                 likePostOrCommentId(comment_id);
+                                saveLinkInGithub(post.message, comment_id, post.permalink_url);
                                 // comment_message;
-                                createGithubIssue(title, post.message, comment_id, post.permalink_url);
                             }
                         });
                     } else if(changes[j].value && changes[j].value.item && changes[j].value.item == 'post') {
@@ -194,18 +184,8 @@ function fbWebhookPost(req, res) {
                         },function(error,response,body) {
                             if(body) {
                                 var post = JSON.parse(body);
-                                const title = post.message.match(/^.*$/m)[0];
-                                post.message = `` +
-                                `## Title \n \n` +
-                                `${post.message} \n \n` +
-                                `## Relevance \n` +
-                                `- [ ] Must \n` +
-                                `- [ ] Nice to have \n` +
-                                `- [ ] Curiosity \n \n` +
-                                `## TL;DR (optional) \n \n` +
-                                `## Other related resources (optional) \n`;
                                 likePostOrCommentId(post.id);
-                                createGithubIssue(title, post.message, post.id, post.permalink_url);
+                                saveLinkInGithub(post.message, post.id, post.permalink_url);
                             }
                         });
                     }
@@ -270,6 +250,57 @@ var replyToPostOrCommentId = function(id, message) {
             console.error(error);
         }
     });
+};
+
+var createDescription = function(title, message, link, pageDescription) {
+    let description =
+      `` +
+      `## Title \n \n` +
+      `${title} \n \n` +
+      `## Link \n \n` +
+      `${link || message} \n \n` +
+      `## Relevance \n` +
+      `- [ ] Must \n` +
+      `- [ ] Nice to have \n` +
+      `- [ ] Curiosity \n \n` +
+      `## TL;DR (optional) \n \n` +
+      `${message} \n \n`;
+    if (pageDescription) {
+      description += `## Page Description \n \n` + `${pageDescription} \n \n`;
+    }
+    return description;    
+};
+
+var saveLinkInGithub = function(message, origin_id, permalink_url) {
+    if (!message) {
+        throw new Error('No message found!');
+    }
+
+    const expression = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)/i;
+    const regex = new RegExp(expression);
+
+    const linkMatch = message.match(regex);
+
+    if (linkMatch && linkMatch[0]) {
+        const link = linkMatch[0];
+        return PageDatasource.info(link).then(info => {
+            const title = info.title || message.slice(0, 50);
+            const description = createDescription(
+                title,
+                message,
+                link,
+                info.description,
+            );
+            createGithubIssue(title, description, origin_id, permalink_url);
+        });
+    }
+  
+    const title = message.slice(0, 50);
+    const description = createDescription(
+        title,
+        message,
+    );
+    createGithubIssue(title, description, origin_id, permalink_url);
 };
 
 var createGithubIssue = function(title, description, origin_id, permalink_url) {
